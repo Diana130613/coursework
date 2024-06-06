@@ -1,6 +1,5 @@
 #ifndef Record_H
 #define Record_H
-
 #include <iostream>
 #include <string>
 using namespace std;
@@ -9,10 +8,18 @@ struct Record {
     string birthdate;
     string phone;
 
-    // Оператор вывода для удобства печати
+    // РћРїРµСЂР°С‚РѕСЂ РІС‹РІРѕРґР° РґР»СЏ СѓРґРѕР±СЃС‚РІР° РїРµС‡Р°С‚Рё
     friend ostream& operator<<(ostream& os, const Record& record) {
-        os << "Фамилия: " << record.surname << ", Дата рождения: " << record.birthdate << ", Телефон: " << record.phone;
+        os << "Р¤Р°РјРёР»РёСЏ: " << record.surname << ", Р”Р°С‚Р° СЂРѕР¶РґРµРЅРёСЏ: " << record.birthdate << ", РўРµР»РµС„РѕРЅ: " << record.phone;
         return os;
+    }
+
+    // РћРїРµСЂР°С‚РѕСЂ РІРІРѕРґР° РґР»СЏ Р·Р°РіСЂСѓР·РєРё РёР· С„Р°Р№Р»Р°
+    friend istream& operator>>(istream& is, Record& record) {
+        getline(is, record.surname, ',');
+        getline(is, record.birthdate, ',');
+        getline(is, record.phone);
+        return is;
     }
 };
 #endif
