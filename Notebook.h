@@ -1,43 +1,58 @@
 #ifndef Notebook_H
 #define Notebook_H
-
 #include "Record.h"
 #include <map>
 #include <regex>
+#include <fstream>
+#include <sstream>
+
 class Notebook {
 private:
-    multimap<string, Record> records; // Контейнер для хранения записей
+    multimap<string, Record> records; // РљРѕРЅС‚РµР№РЅРµСЂ РґР»СЏ С…СЂР°РЅРµРЅРёСЏ Р·Р°РїРёСЃРµР№
+    const string filename = "notebook.txt"; // РРјСЏ С„Р°Р№Р»Р° РґР»СЏ С…СЂР°РЅРµРЅРёСЏ Р·Р°РїРёСЃРµР№
 
 public:
-    // Добавление записи
+    // РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂ, Р·Р°РіСЂСѓР¶Р°СЋС‰РёР№ Р·Р°РїРёСЃРё РёР· С„Р°Р№Р»Р°
+    Notebook() {
+        loadFromFile();
+    }
+
+    // Р”РµСЃС‚СЂСѓРєС‚РѕСЂ, СЃРѕС…СЂР°РЅСЏСЋС‰РёР№ Р·Р°РїРёСЃРё РІ С„Р°Р№Р»
+    ~Notebook() {
+        saveToFile();
+    }
+
+    // Р”РѕР±Р°РІР»РµРЅРёРµ Р·Р°РїРёСЃРё
     void addRecord(const string& surname, const string& birthdate, const string& phone) {
         if (surname.empty() || birthdate.empty() || phone.empty()) {
-            throw invalid_argument("Все поля должны быть заполнены.");
+            throw invalid_argument("Р’СЃРµ РїРѕР»СЏ РґРѕР»Р¶РЅС‹ Р±С‹С‚СЊ Р·Р°РїРѕР»РЅРµРЅС‹.");
         }
         if (!isValidDate(birthdate)) {
-            throw invalid_argument("Дата должна быть в формате ДД-ММ-ГГГГ.");
+            throw invalid_argument("Р”Р°С‚Р° РґРѕР»Р¶РЅР° Р±С‹С‚СЊ РІ С„РѕСЂРјР°С‚Рµ Р”Р”-РњРњ-Р“Р“Р“Р“.");
         }
         Record record = { surname, birthdate, phone };
         records.insert(make_pair(surname, record));
+        saveToFile();
     }
 
-    // Удаление записи по фамилии
+    // РЈРґР°Р»РµРЅРёРµ Р·Р°РїРёСЃРё РїРѕ С„Р°РјРёР»РёРё
     void deleteRecord(const string& surname) {
         auto range = records.equal_range(surname);
         if (range.first == range.second) {
-            throw runtime_error("Запись не найдена.");
+            throw runtime_error("Р—Р°РїРёСЃСЊ РЅРµ РЅР°Р№РґРµРЅР°.");
         }
         else {
             records.erase(range.first, range.second);
-            cout << "Запись(и) с фамилией " << surname << " удалены." << endl;
+            saveToFile();
+            cout << "Р—Р°РїРёСЃСЊ(Рё) СЃ С„Р°РјРёР»РёРµР№ " << surname << " СѓРґР°Р»РµРЅС‹." << endl;
         }
     }
 
-    // Поиск записи по фамилии
+    // РџРѕРёСЃРє Р·Р°РїРёСЃРё РїРѕ С„Р°РјРёР»РёРё
     void searchBySurname(const string& surname) const {
         auto range = records.equal_range(surname);
         if (range.first == range.second) {
-            throw runtime_error("Запись не найдена.");
+            throw runtime_error("Р—Р°РїРёСЃСЊ РЅРµ РЅР°Р№РґРµРЅР°.");
         }
         else {
             for (auto it = range.first; it != range.second; ++it) {
@@ -46,7 +61,7 @@ public:
         }
     }
 
-    // Поиск записи по номеру телефона
+    // РџРѕРёСЃРє Р·Р°РїРёСЃРё РїРѕ РЅРѕРјРµСЂСѓ С‚РµР»РµС„РѕРЅР°
     void searchByPhone(const string& phone) const {
         for (const auto& pair : records) {
             if (pair.second.phone == phone) {
@@ -54,10 +69,10 @@ public:
                 return;
             }
         }
-        throw runtime_error("Запись не найдена.");
+        throw runtime_error("Р—Р°РїРёСЃСЊ РЅРµ РЅР°Р№РґРµРЅР°.");
     }
 
-    // Поиск записи по дате рождения
+    // РџРѕРёСЃРє Р·Р°РїРёСЃРё РїРѕ РґР°С‚Рµ СЂРѕР¶РґРµРЅРёСЏ
     void searchByBirthdate(const string& birthdate) const {
         for (const auto& pair : records) {
             if (pair.second.birthdate == birthdate) {
@@ -65,13 +80,13 @@ public:
                 return;
             }
         }
-        throw runtime_error("Запись не найдена.");
+        throw runtime_error("Р—Р°РїРёСЃСЊ РЅРµ РЅР°Р№РґРµРЅР°.");
     }
 
-    // Печать всех записей
+    // РџРµС‡Р°С‚СЊ РІСЃРµС… Р·Р°РїРёСЃРµР№
     void printAllRecords() const {
         if (records.empty()) {
-            throw runtime_error("Записей нет.");
+            throw runtime_error("Р—Р°РїРёСЃРµР№ РЅРµС‚.");
         }
         for (const auto& pair : records) {
             cout << pair.second << endl;
@@ -82,6 +97,34 @@ private:
     bool isValidDate(const string& date) const {
         const regex pattern(R"(\d{2}-\d{2}-\d{4})");
         return regex_match(date, pattern);
+    }
+
+    // РЎРѕС…СЂР°РЅРµРЅРёРµ РІСЃРµС… Р·Р°РїРёСЃРµР№ РІ С„Р°Р№Р»
+    void saveToFile() const {
+        ofstream outFile(filename);
+        if (!outFile) {
+            throw runtime_error("РќРµ СѓРґР°Р»РѕСЃСЊ РѕС‚РєСЂС‹С‚СЊ С„Р°Р№Р» РґР»СЏ Р·Р°РїРёСЃРё.");
+        }
+        for (const auto& pair : records) {
+            outFile << pair.second.surname << "," << pair.second.birthdate << "," << pair.second.phone << endl;
+        }
+    }
+
+    // Р—Р°РіСЂСѓР·РєР° РІСЃРµС… Р·Р°РїРёСЃРµР№ РёР· С„Р°Р№Р»Р°
+    void loadFromFile() {
+        ifstream inFile(filename);
+        if (!inFile) {
+            // Р¤Р°Р№Р» РјРѕР¶РµС‚ РѕС‚СЃСѓС‚СЃС‚РІРѕРІР°С‚СЊ РїСЂРё РїРµСЂРІРѕРј Р·Р°РїСѓСЃРєРµ РїСЂРѕРіСЂР°РјРјС‹, СЌС‚Рѕ РЅРµ РѕС€РёР±РєР°
+            return;
+        }
+        string line;
+        while (getline(inFile, line)) {
+            istringstream iss(line);
+            Record record;
+            if (iss >> record) {
+                records.insert(make_pair(record.surname, record));
+            }
+        }
     }
 };
 #endif
